@@ -6,16 +6,21 @@ import './App.css'; // We will clean this up next
 function App() {
     const [roomInput, setRoomInput] = useState('');
     const [activeRoomId, setActiveRoomId] = useState(null);
+    const [nickname, setNickname] = useState('');
+    // Stable per-session identity: nickname + random suffix so two "Bob"s don't collide.
+    const [playerId] = useState(() => `p_${Math.random().toString(36).slice(2, 8)}`);
 
-    // This hook manages the entire connection lifecycle autonomously 
-    const { connected, gameState, startGame, submitDrawing, submitArtVote } = useGameEngine(activeRoomId);
+    // This hook manages the entire connection lifecycle autonomously
+    const { connected, gameState, startGame, submitThemeVote, submitDrawing, submitArtVote } =
+        useGameEngine(activeRoomId, playerId);
 
     const handleCreateRoom = async () => {
+        if (!nickname.trim()) return alert('Enter a nickname first');
         try {
             const response = await fetch('http://localhost:8080/api/rooms', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ hostId: "reactUser123" })
+                body: JSON.stringify({ hostId: playerId })
             });
             const data = await response.json();
             setActiveRoomId(data.id); // Instantly connect to the new room
@@ -24,22 +29,51 @@ function App() {
         }
     };
 
+    const handleJoinRoom = async () => {
+        if (!nickname.trim()) return alert('Enter a nickname first');
+        const code = roomInput.trim().toUpperCase();
+        if (!code) return;
+        try {
+            const response = await fetch(`http://localhost:8080/api/rooms/${code}/join`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: playerId })
+            });
+            if (!response.ok) {
+                alert('Could not join: invalid code or game already started.');
+                return;
+            }
+            setActiveRoomId(code); // Only connect once the server confirms the join
+        } catch (error) {
+            console.error("Failed to join room. Is Spring Boot running?", error);
+        }
+    };
+
     // 1. LOBBY SCREEN (Before joining a WebSocket room)
     if (!activeRoomId) {
         return (
             <div className="container">
                 <h1>Build Battle</h1>
+                <div style={{ marginBottom: '20px' }}>
+                    <input
+                        type="text"
+                        placeholder="Your nickname"
+                        value={nickname}
+                        onChange={(e) => setNickname(e.target.value)}
+                        maxLength={16}
+                    />
+                </div>
                 <div>
-                    <input 
-                        type="text" 
-                        placeholder="Enter 5-Letter Code" 
+                    <input
+                        type="text"
+                        placeholder="Enter 5-Letter Code"
                         value={roomInput}
                         onChange={(e) => setRoomInput(e.target.value.toUpperCase())}
-                        maxLength={4}
+                        maxLength={5}
                     />
-                    <button onClick={() => setActiveRoomId(roomInput)}>Join Room</button>
+                    <button onClick={handleJoinRoom}>Join Room</button>
                 </div>
-                
+
                 {/* The new Create button */}
                 <div style={{ marginTop: '20px' }}>
                     <button onClick={handleCreateRoom}>Create New Room</button>
@@ -69,7 +103,7 @@ function App() {
                 <p>Time remaining: {gameState.durationSeconds}s</p>
                 <div className="theme-grid">
                     {gameState.data.map((theme, idx) => (
-                        <button key={idx}>{theme}</button>
+                        <button key={idx} onClick={() => submitThemeVote(theme)}>{theme}</button>
                     ))}
                 </div>
             </div>

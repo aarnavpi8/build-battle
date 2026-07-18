@@ -23,8 +23,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class GameEngineService {
 
-    private static final int THEME_VOTE_SECONDS = 15;
-    private static final int DRAWING_SECONDS = 120;
+    private static final int THEME_VOTE_SECONDS = 3;
+    private static final int DRAWING_SECONDS = 5;
     private static final int ART_VOTE_PER_DRAWING_SECONDS = 10;
     private static final int LEADERBOARD_SECONDS = 30;
 
