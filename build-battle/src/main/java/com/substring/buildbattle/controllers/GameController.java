@@ -29,7 +29,7 @@ public class GameController {
 
     @MessageMapping("/room/{roomId}/theme-vote")
     public void handleThemeVote(@DestinationVariable String roomId, @Payload ThemeVotePayload payload) {
-
+        gameEngineService.registerThemeVote(roomId, payload.theme());
     }
 
     @MessageMapping("/room/{roomId}/submit-drawing")
@@ -39,7 +39,7 @@ public class GameController {
 
     @MessageMapping("/room/{roomId}/art-vote")
     public void handleArtVote(@DestinationVariable String roomId, @Payload ArtVotePayload payload) {
-
+        gameEngineService.registerArtVote(roomId, payload.drawingId(), payload.score());
     }
 
 }

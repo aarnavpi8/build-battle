@@ -5,12 +5,17 @@ import com.substring.buildbattle.entities.Room;
 import com.substring.buildbattle.repositories.DrawingRepository;
 import com.substring.buildbattle.repositories.RoomRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import com.substring.buildbattle.config.SchedulerConfig;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -18,9 +23,15 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class GameEngineService {
 
+    private static final int THEME_VOTE_SECONDS = 15;
+    private static final int DRAWING_SECONDS = 120;
+    private static final int ART_VOTE_PER_DRAWING_SECONDS = 10;
+    private static final int LEADERBOARD_SECONDS = 30;
+
     private final RoomRepository roomRepository;
     private final DrawingRepository drawingRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final MongoTemplate mongoTemplate;
 
     private final TaskScheduler taskScheduler;
 
@@ -36,12 +47,12 @@ public class GameEngineService {
 
         messagingTemplate.convertAndSend(
                 "/topic/room/" + roomId + "/phase",
-                new PhaseUpdate("THEME_VOTE", 5, room.getThemeOptions())
+                new PhaseUpdate("THEME_VOTE", THEME_VOTE_SECONDS, room.getThemeOptions())
         );
 
         taskScheduler.schedule(
                 () -> startDrawingPhase(roomId),
-                Instant.now().plusSeconds(5)
+                Instant.now().plusSeconds(THEME_VOTE_SECONDS)
         );
     }
 
@@ -49,27 +60,40 @@ public class GameEngineService {
         Room room = roomRepository.findById(roomId).orElseThrow();
         room.setStatus("DRAWING");
 
-        room.setSelectedTheme(room.getThemeOptions().get(0));
+        room.setSelectedTheme(resolveWinningTheme(room));
         roomRepository.save(room);
 
         messagingTemplate.convertAndSend(
                 "/topic/room/" + roomId + "/phase",
-                new PhaseUpdate("DRAWING", 5, room.getSelectedTheme())
+                new PhaseUpdate("DRAWING", DRAWING_SECONDS, room.getSelectedTheme())
         );
 
         taskScheduler.schedule(
                 () -> startArtVotePhase(roomId),
-                Instant.now().plusSeconds((5 + 2))
+            Instant.now().plusSeconds((DRAWING_SECONDS + 3))
         );
     }
 
+    private String resolveWinningTheme(Room room) {
+        Map<String, Integer> votes = room.getThemeVotes();
+
+        if(votes == null || votes.isEmpty()) {
+            return room.getThemeOptions().get(0);
+        }
+
+        return votes.entrySet().stream()
+                .max(Comparator.comparingInt(Map.Entry::getValue))
+                .map(Map.Entry::getKey)
+                .orElse(room.getThemeOptions().get(0));
+    }
+
     public void saveDrawing(String roomId, String userId, List<String> pixels) {
-        Drawing drawing = new Drawing();
+        Drawing drawing = drawingRepository.findByRoomIdAndUserId(roomId, userId)
+                .orElseGet(Drawing::new);
 
         drawing.setUserId(userId);
         drawing.setRoomId(roomId);
         drawing.setPixels(pixels);
-        drawing.setTotalScore(0);
 
         drawingRepository.save(drawing);
     }
@@ -86,7 +110,7 @@ public class GameEngineService {
             return;
         }
 
-        int displayDurationSeconds = 10;
+        int displayDurationSeconds = ART_VOTE_PER_DRAWING_SECONDS;
 
         for(int i = 0; i < drawings.size(); i++) {
             Drawing currentDrawing = drawings.get(i);
@@ -121,11 +145,20 @@ public class GameEngineService {
     }
 
     public void registerArtVote(String roomId, String drawingId, int score) {
-        Drawing drawing = drawingRepository.findById(drawingId)
-                .orElseThrow(() -> new IllegalArgumentException("Drawing not found"));
-
-        drawing.setTotalScore(drawing.getTotalScore() + score);
-        drawingRepository.save(drawing);
+//        Drawing drawing = drawingRepository.findById(drawingId)
+//                .orElseThrow(() -> new IllegalArgumentException("Drawing not found"));
+//
+//        drawing.setTotalScore(drawing.getTotalScore() + score);
+//        drawingRepository.save(drawing);
+        if (score < 1 || score > 5) {
+            throw new IllegalArgumentException("Score must be between 1 and 5");
+        }
+        // Atomic increment so concurrent voters can't clobber each other's updates.
+        mongoTemplate.updateFirst(
+                Query.query(Criteria.where("_id").is(drawingId)),
+                new Update().inc("totalScore", score),
+                Drawing.class
+        );
     }
 
     public void startLeaderboardPhase(String roomId) {
@@ -140,7 +173,7 @@ public class GameEngineService {
 
         messagingTemplate.convertAndSend(
                 "/topic/room/" + roomId + "/phase",
-                new PhaseUpdate("LEADERBOARD", 30, rankedDrawings)
+                new PhaseUpdate("LEADERBOARD", LEADERBOARD_SECONDS, rankedDrawings)
         );
     }
 
