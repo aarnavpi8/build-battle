@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useGameEngine } from './useGameEngine';
 import PixelGrid from './PixelGrid';
-import PixelViewer from './PixelViewer';
-import './App.css'; // We will clean this up next
+import './App.css';
 
 function App() {
     const [roomInput, setRoomInput] = useState('');
@@ -21,7 +20,7 @@ function App() {
             const response = await fetch('http://localhost:8080/api/rooms', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ hostId: playerId })
+                body: JSON.stringify({ hostId: playerId, nickname: nickname.trim() })
             });
             const data = await response.json();
             setActiveRoomId(data.id); // Instantly connect to the new room
@@ -38,7 +37,7 @@ function App() {
             const response = await fetch(`http://localhost:8080/api/rooms/${code}/join`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: playerId })
+                body: JSON.stringify({ userId: playerId, nickname: nickname.trim() })
             });
             if (!response.ok) {
                 alert('Could not join: invalid code or game already started.');
@@ -172,7 +171,7 @@ function App() {
                             <h3 style={{ color: index === 0 ? '#FFD700' : '#FFF' }}>
                                 #{index + 1} ({drawing.totalScore} pts)
                             </h3>
-                            <p style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#aaa' }}>{drawing.userId}</p>
+                            <p style={{ margin: '0 0 10px 0', fontSize: '14px', color: '#aaa' }}>{drawing.username || drawing.userId}</p>
                             
                             <PixelViewer gridData={drawing.pixels} size={150} />
                         </div>
