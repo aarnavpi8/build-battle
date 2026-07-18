@@ -59,11 +59,11 @@ public class GameEngineService {
 
         taskScheduler.schedule(
                 () -> startArtVotePhase(roomId),
-                Instant.now().plusSeconds((5))
+                Instant.now().plusSeconds((5 + 2))
         );
     }
 
-    public void saveDrawing(String roomId, String userId, byte[] pixels) {
+    public void saveDrawing(String roomId, String userId, List<String> pixels) {
         Drawing drawing = new Drawing();
 
         drawing.setUserId(userId);

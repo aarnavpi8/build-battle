@@ -30,8 +30,8 @@ public class Room {
 
     private Map<String, List<String>> submissions = new ConcurrentHashMap<>();
 
-    public void addSubmission(String playerId, List<String> gird) {
-        this.submissions.put(playerId, gird);
+    public void addSubmission(String playerId, List<String> pixels) {
+        this.submissions.put(playerId, pixels);
     }
 
 }

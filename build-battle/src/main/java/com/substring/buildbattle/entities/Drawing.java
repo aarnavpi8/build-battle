@@ -4,6 +4,8 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.List;
+
 @Data
 @Document(collection = "drawings")
 public class Drawing {
@@ -14,7 +16,7 @@ public class Drawing {
     private String roomId;
     private String userId;
 
-    private byte[] pixels;
+    private List<String> pixels;
 
     private int totalScore;
 
