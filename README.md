@@ -54,7 +54,7 @@ Open the URL Vite prints (default `http://localhost:5173`).
 
 1. **Setup:** Open the client in two or more browser windows (use incognito/separate windows so each is a distinct player). Enter a nickname in each.
 2. **Rooms:** Create a new room to get a 5-letter code, or join an existing one by entering its code. At least 2 players are needed, since self-voting is disabled.
-3. **Playing:** The host starts the game. Vote on a theme, draw it on the pixel grid before the timer ends, then rate each other's drawings 1–5.
+3. **Playing:** The host starts the game. Vote on a theme, draw it on the pixel grid before the timer ends, then rate each other's drawings 1-5.
 4. **Results:** After all drawings are rated, a leaderboard ranks every player by total score.
 
 ## Configuration
