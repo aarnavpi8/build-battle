@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGameEngine } from './useGameEngine';
 import PixelGrid from './PixelGrid';
+import PixelViewer from './PixelViewer';
 import './App.css'; // We will clean this up next
 
 function App() {
