@@ -57,6 +57,4 @@ Open the URL Vite prints (default `http://localhost:5173`).
 3. **Playing:** The host starts the game. Vote on a theme, draw it on the pixel grid before the timer ends, then rate each other's drawings 1-5.
 4. **Results:** After all drawings are rated, a leaderboard ranks every player by total score.
 
-## Configuration
 
-Phase durations are defined in `GameEngineService` (theme vote 15s, drawing 120s, 10s per drawing during art voting). Lower them while testing. If you change the data model, clear the `rooms` and `drawings` collections in MongoDB.
