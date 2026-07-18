@@ -4,10 +4,7 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Data
@@ -20,11 +17,14 @@ public class Room {
     private String hostId;
     private List<String> players = new ArrayList<>();
 
+    private Map<String, String> playerNames = new HashMap<>();
+
     private String status;
 
     private List<String> themeOptions = new ArrayList<>();
     private String selectedTheme;
     private Map<String, Integer> themeVotes =  new HashMap<>();
+    private Set<String> themeVoters = new HashSet<>();
 
     private long phaseEndsAt;
 
