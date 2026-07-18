@@ -36,12 +36,12 @@ public class GameEngineService {
 
         messagingTemplate.convertAndSend(
                 "/topic/room/" + roomId + "/phase",
-                new PhaseUpdate("THEME_VOTE", 15, room.getThemeOptions())
+                new PhaseUpdate("THEME_VOTE", 5, room.getThemeOptions())
         );
 
         taskScheduler.schedule(
                 () -> startDrawingPhase(roomId),
-                Instant.now().plusSeconds(15)
+                Instant.now().plusSeconds(5)
         );
     }
 
@@ -53,13 +53,13 @@ public class GameEngineService {
         roomRepository.save(room);
 
         messagingTemplate.convertAndSend(
-                "topic/room/" + roomId + "/phase",
-                new PhaseUpdate("DRAWING", 120, room.getSelectedTheme())
+                "/topic/room/" + roomId + "/phase",
+                new PhaseUpdate("DRAWING", 5, room.getSelectedTheme())
         );
 
         taskScheduler.schedule(
                 () -> startArtVotePhase(roomId),
-                Instant.now().plusSeconds((120))
+                Instant.now().plusSeconds((5))
         );
     }
 

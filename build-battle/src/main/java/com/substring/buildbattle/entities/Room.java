@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 @Document(collection = "rooms")
@@ -26,5 +27,11 @@ public class Room {
     private Map<String, Integer> themeVotes =  new HashMap<>();
 
     private long phaseEndsAt;
+
+    private Map<String, List<String>> submissions = new ConcurrentHashMap<>();
+
+    public void addSubmission(String playerId, List<String> gird) {
+        this.submissions.put(playerId, gird);
+    }
 
 }
